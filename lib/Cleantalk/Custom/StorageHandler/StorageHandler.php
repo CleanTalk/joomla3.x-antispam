@@ -27,10 +27,17 @@ class StorageHandler implements \Cleantalk\Common\StorageHandler\StorageHandler
 		$data = new \JRegistry($table->custom_data);
 		$data_array = $data->toArray();
 		if ( isset($data_array[$setting_name]) ) {
-			$data->remove($setting_name);
+			if (method_exists($data, 'remove')) {
+				$data->remove($setting_name);
+				$table->custom_data = $data->toString();
+			} else {
+				$removeSettingInstance = new RemoveSetting($table->custom_data);
+				$removeSettingInstance->remove($setting_name);
+				$table->custom_data = $removeSettingInstance->toString();
+			}
+			return $table->store();
 		}
-		$table->custom_data = $data->toString();
-		$table->store();
+		return false;
 	}
 
 	public function saveSetting($setting_name, $setting_value)
